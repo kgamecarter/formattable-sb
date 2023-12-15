@@ -8,10 +8,12 @@ namespace FormattableSb
     /// <summary>
     /// Represents a mutable FormattableString. This class cannot be inherited.
     /// </summary>
-    public sealed class FormattableStringBuilder
+    /// <param name="mergeSameArgument">Merge same argumet</param>
+    public sealed class FormattableStringBuilder(bool mergeSameArgument = false)
     {
         private readonly StringBuilder _format = new();
         private readonly List<object?> _arguments = new();
+        private readonly bool _mergeSameArgument = mergeSameArgument;
 
         /// <summary>
         /// Appends the specified interpolated string to the end of the composite format string,
@@ -72,12 +74,17 @@ namespace FormattableSb
             /// <param name="format">The format string.</param>
             public void AppendFormatted(object? value, int alignment = 0, string? format = null)
             {
-                _builder._format.Append('{').Append(_builder._arguments.Count);
+                var index = -1;
+                if (_builder._mergeSameArgument) index = _builder._arguments.IndexOf(value);
+                if (index < 0)
+                {
+                    index = _builder._arguments.Count;
+                    _builder._arguments.Add(value);
+                }
+                _builder._format.Append('{').Append(index);
                 if (alignment != 0) _builder._format.Append(CultureInfo.InvariantCulture, $",{alignment}");
                 if (format is not null) _builder._format.Append(':').Append(format);
                 _builder._format.Append('}');
-
-                _builder._arguments.Add(value);
             }
         }
     }
